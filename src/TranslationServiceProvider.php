@@ -7,6 +7,20 @@ use Illuminate\Translation\TranslationServiceProvider as LaravelTranslationServi
 
 class TranslationServiceProvider extends LaravelTranslationServiceProvider
 {
+	/**
+	 * Perform post-registration booting of services.
+	 *
+	 * @return void
+	 */
+	public function boot()
+	{
+		parent::boot();
+		
+	    $this->publishes([
+	        __DIR__.'/../config/languagecenter.php' => config_path('languagecenter.php'),
+	    ], 'config');
+	}
+
     /**
      * Register the service provider.
      *
@@ -32,6 +46,10 @@ class TranslationServiceProvider extends LaravelTranslationServiceProvider
             
             return $trans;
         });
+        
+        $this->mergeConfigFrom(
+		    __DIR__.'/../config/languagecenter.php', 'languagecenter'
+		);
     }
 
 }
