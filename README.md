@@ -68,6 +68,17 @@ trans([
 > Will return the value of the string id `header.download`, but for the platorm `ios`.
 > However if the string id for `header.download` does not exists it will return `You should download our iOS app!`.
 
+```
+trans([
+  'key' => 'footer.copyright',
+  'string' => 'Copyright 2016 Novasa',
+  'comment' => 'A comment that you would like to show at the Language Center.',
+])
+```
+> Will return the value of the string id `footer.copyright`.
+> However if the string id for `footer.copyright` does not exists it will return `Copyright 2016 Novasa`.
+> This will also add a comment to the Language Center.
+
 #### Note
 If a translation does not exists it will automatically be created at the Language Center.
 
