@@ -1,0 +1,16 @@
+{
+    "name": "novasa/laravel-language-center",
+    "description": "Language Center for Laravel.",
+    "keywords": ["novasa", "laravel", "language", "center"],
+    "license": "MIT",
+    "type": "package",
+    "require": {
+        "laravel/framework": "5.2.*",
+        "guzzlehttp/guzzle": "~6.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Novasa\\LaravelLanguageCenter\\": "src/"
+        }
+    }
+}
