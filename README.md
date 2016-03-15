@@ -35,7 +35,7 @@ trans('header.welcome_back', [
   'username' => 'Mark',
 ])
 ```
-> Will return the value of the string id 'header.welcome_back', but will replace ':username' with 'Mark' in the translation.
+> Will return the value of the string id `header.welcome_back`, but will replace `:username` with `Mark` in the translation.
 > However if the string id for `header.welcome_back` does not exists it will return `header.welcome_back`.
 
 ```
@@ -44,7 +44,7 @@ trans([
   'string' => 'Hello World!',
 ])
 ```
-> Will return the value of the string id 'header.hello_world'.
+> Will return the value of the string id `header.hello_world`.
 > However if the string id for `header.hello_world` does not exists it will return `Hello World!`.
 
 ```
@@ -55,7 +55,7 @@ trans([
   'username' => 'Mark',
 ])
 ```
-> Will return the value of the string id 'header.hello_user', but will replace ':username' with 'Mark' in the translation.
+> Will return the value of the string id `header.hello_user`, but will replace `:username` with `Mark` in the translation.
 > However if the string id for `header.hello_user` does not exists it will return `Hello Mark!`.
 
 ```
@@ -65,7 +65,7 @@ trans([
   'platform' => 'ios',
 ])
 ```
-> Will return the value of the string id 'header.download', but for the platorm `ios`.
+> Will return the value of the string id `header.download`, but for the platorm `ios`.
 > However if the string id for `header.download` does not exists it will return `You should download our iOS app!`.
 
 #### Note
