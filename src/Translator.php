@@ -2,6 +2,8 @@
 
 namespace Novasa\LaravelLanguageCenter;
 
+use Illuminate\Support\Facades\Config;
+use GuzzleHttp\Client;
 use Illuminate\Support\Arr;
 use Illuminate\Translation\LoaderInterface;
 use Illuminate\Translation\Translator as LaravelTranslator;
@@ -173,22 +175,22 @@ class Translator extends LaravelTranslator
 
     protected function getClient()
     {
-        return new \GuzzleHttp\Client();
+        return new Client();
     }
 
     protected function getApiUrl()
     {
-        return \Config::get('languagecenter.url');
+        return Config::get('languagecenter.url');
     }
 
     protected function getUsername()
     {
-        return \Config::get('languagecenter.username');
+        return Config::get('languagecenter.username');
     }
 
     protected function getPassword()
     {
-        return \Config::get('languagecenter.password');
+        return Config::get('languagecenter.password');
     }
 
     protected function getAuthentication()
@@ -216,8 +218,8 @@ class Translator extends LaravelTranslator
         foreach ($languages as $language) {
             $this->languages[] = $language->codename;
             if ($language->is_fallback) {
-                \Config::set('app.locale', $language->codename);
-                \Config::set('app.fallback_locale', $language->codename);
+                Config::set('app.locale', $language->codename);
+                Config::set('app.fallback_locale', $language->codename);
                 $this->locale = $language->codename;
             }
         }
@@ -262,6 +264,6 @@ class Translator extends LaravelTranslator
 
     protected function getDefaultPlatform()
     {
-        return \Config::get('languagecenter.platform', 'web');
+        return Config::get('languagecenter.platform', 'web');
     }
 }
