@@ -1,6 +1,8 @@
 # Laravel Language Center
 Language Center for Laravel.
 
+> This requires access to Novasa's Language Center.
+
 # Install
 
 Run `composer require novasa/laravel-language-center:~1.0`.
