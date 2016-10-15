@@ -2,9 +2,10 @@
 
 namespace Novasa\LaravelLanguageCenter;
 
+use Carbon\Carbon;
 use GuzzleHttp\Client;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Translation\LoaderInterface;
 use Illuminate\Translation\Translator as LaravelTranslator;
 
@@ -26,7 +27,7 @@ class Translator extends LaravelTranslator
         $this->loader = $loader;
         $this->locale = $locale;
 
-        // Load langauges from API
+        // Load languages from API
         if (count($this->languages) == 0) {
             $this->loadLanguages();
         }
@@ -47,24 +48,30 @@ class Translator extends LaravelTranslator
         // Make support for array data
         if (is_array($data)) {
             $key = $data['key'];
+
             if (isset($data['string'])) {
                 $string = $data['string'];
             }
+
             if (isset($data['platform'])) {
                 $platform = $data['platform'];
             }
+
             if (isset($data['comment'])) {
                 $comment = $data['comment'];
             }
         } else {
             $key = $data;
         }
+
         if (!isset($string)) {
             $string = $key;
         }
+
         if (!isset($platform)) {
             $platform = $this->getDefaultPlatform();
         }
+
         if (!isset($comment)) {
             $comment = null;
         }
@@ -106,6 +113,177 @@ class Translator extends LaravelTranslator
         return $line;
     }
 
+    public function setLocale($locale)
+    {
+        config()->set('app.locale', $locale);
+        config()->set('fallback_locale', $locale);
+
+        $this->locale = $locale;
+    }
+
+    public function loadLanguages()
+    {
+        $timestamp = Carbon::now()->subSeconds($this->getUpdateAfter())->timestamp;
+        $lastUpdated = Cache::get('languagecenter.timestamp', 0);
+
+        if ($timestamp > $lastUpdated && !is_null($timestamp)) {
+            $this->updateLanguages();
+        }
+
+        $languages = Cache::get('languagecenter.languages');
+
+        foreach ($languages as $language) {
+            $this->languages[] = $language->codename;
+
+            if ($language->is_fallback) {
+                $this->setLocale($language->codename);
+            }
+        }
+    }
+
+    public function loadStrings($locale, $platform = null, $check = null)
+    {
+        // Load languages from API
+        if (count($this->languages) == 0) {
+            $this->loadLanguages();
+        }
+
+        if ($platform == null) {
+            $platform = $this->getDefaultPlatform();
+        }
+
+        if (is_null($check)) {
+            $check = !is_null($this->getUpdateAfter());
+        }
+
+        if ($check) {
+            $languages = Cache::get('languagecenter.languages', []);
+
+            foreach ($languages as $language) {
+                $timestamp = Cache::get('languagecenter.language.'.$language->codename.'.timestamp', 0);
+
+                if ($language->timestamp > $timestamp) {
+                    $this->updateStrings($locale, $platform);
+                }
+            }
+        }
+
+        $this->strings = Cache::get('languagecenter.strings', []);
+    }
+
+    public function updateLanguages()
+    {
+        $timestamp = Carbon::now()->timestamp;
+
+        $client = $this->getClient();
+
+        try {
+            $res = $client->request('GET', $this->getApiUrl() . 'languages', [
+                'auth' => $this->getAuthentication(),
+                'query' => [
+                    'timestamp' => 'on',
+                ],
+            ]);
+
+            if ($res->getStatusCode() != 200) {
+                throw new ApiException("API returned status [{$res->getStatusCode()}].");
+            }
+
+            $languages = json_decode((string)$res->getBody());
+
+            Cache::forever('languagecenter.languages', $languages);
+            Cache::forever('languagecenter.timestamp', $timestamp);
+        } catch (\Exception $exception) {
+            $languages = Cache::get('languagecenter.languages');
+
+            if (is_null($languages)) {
+                throw $exception; // Nothing to do, can not restore data, throw exception
+            }
+        }
+    }
+
+    public function updateStrings($locale, $platform = null)
+    {
+        try {
+            $timestamp = Carbon::now()->timestamp;
+
+            if (is_null($platform)) {
+                $platform = $this->getDefaultPlatform();
+            }
+
+            $client = $this->getClient();
+
+            $res = $client->request('GET', $this->getApiUrl() . 'strings?platform=' . $platform . '&language=' . $locale, [
+                'auth' => $this->getAuthentication(),
+            ]);
+
+            if ($res->getStatusCode() != 200) {
+                throw new ApiException("API returned status [{$res->getStatusCode()}].");
+            }
+
+            $strings = json_decode((string)$res->getBody());
+
+            if (!isset($this->strings[$locale])) {
+                $this->strings[$locale] = [];
+            }
+
+            $this->strings[$locale][$platform] = [];
+
+            foreach ($strings as $string) {
+                $this->strings[$locale][$platform][$string->key] = $string->value;
+                $this->strings[$string->language][$platform][$string->key] = $string->value;
+            }
+
+            Cache::forever('languagecenter.strings', $this->strings);
+            Cache::forever('languagecenter.language.' . $locale . '.timestamp', $timestamp);
+        } catch (\Exception $exception) {
+            // failed to update string - it's okay - we do it later
+        }
+    }
+
+    public function createString($key, $string, $platform = null, $comment = null)
+    {
+        if ($platform == null) {
+            $platform = $this->getDefaultPlatform();
+        }
+
+        $dotpos = strpos($key, '.');
+
+        if (!($dotpos > 0)) {
+            throw new ApiException('Missing [.] in string key.');
+        }
+
+        $category = str_replace(['_'], [' '], ucfirst(substr($key, 0, $dotpos)));
+        $name = str_replace(['_'], [' '], ucfirst(substr($key, $dotpos + 1)));
+
+        try {
+            $client = $this->getClient();
+
+            $res = $client->request('POST', $this->getApiUrl() . 'string', [
+                'auth' => $this->getAuthentication(),
+                'form_params' => [
+                    'platform' => $platform,
+                    'category' => $category,
+                    'key' => $name,
+                    'value' => $string,
+                    'comment' => $comment,
+                ],
+            ]);
+
+            if ($res->getStatusCode() != 200) {
+                throw new ApiException("API returned status [{$res->getStatusCode()}].");
+            }
+        } catch (\Exception $exception) {
+            // failed to create string, will just try later.
+        }
+
+        foreach ($this->strings as $locale => $platforms) {
+            $this->strings[$locale][$platform][$key] = $string;
+        }
+
+        Cache::forever('languagecenter.strings', $this->strings);
+    }
+
     /**
      * Retrieve a language line out the loaded array.
      *
@@ -123,11 +301,12 @@ class Translator extends LaravelTranslator
             $platform = $this->getDefaultPlatform();
         }
 
-        $this->loadLanguageStrings($locale, $platform);
+        $this->loadStrings($locale, $platform);
 
         $key = implode('.', [$group, $item]);
-        if (isset($this->strings[$locale]) && isset($this->strings[$locale][$key])) {
-            return $this->makeReplacements($this->strings[$locale][$key], $replace);
+
+        if (isset($this->strings[$locale]) && isset($this->strings[$locale][$platform]) && isset($this->strings[$locale][$platform][$key])) {
+            return $this->makeReplacements($this->strings[$locale][$platform][$key], $replace);
         }
 
         $line = Arr::get($this->loaded[$namespace][$group][$locale], $item);
@@ -139,40 +318,6 @@ class Translator extends LaravelTranslator
         }
     }
 
-    protected function loadLanguageStrings($locale, $platform = null, $force = false)
-    {
-        // Load langauges from API
-        if (count($this->languages) == 0) {
-            $this->loadLanguages();
-        }
-
-        if ($platform == null) {
-            $platform = $this->getDefaultPlatform();
-        }
-
-        if (in_array($locale, $this->languages)) {
-            if ($force or !isset($this->strings[$locale])) {
-                $client = $this->getClient();
-
-                $res = $client->request('GET', $this->getApiUrl().'strings?platform='.$platform.'&language='.$locale, [
-                    'auth' => $this->getAuthentication(),
-                ]);
-
-                if ($res->getStatusCode() != 200) {
-                    throw new ApiException("API returned status [{$res->getStatusCode()}].");
-                }
-
-                $strings = json_decode((string) $res->getBody());
-
-                $this->strings[$locale] = [];
-                foreach ($strings as $string) {
-                    $this->strings[$locale][$string->key] = $string->value;
-                    $this->strings[$string->language][$string->key] = $string->value;
-                }
-            }
-        }
-    }
-
     protected function getClient()
     {
         return new Client();
@@ -180,17 +325,27 @@ class Translator extends LaravelTranslator
 
     protected function getApiUrl()
     {
-        return Config::get('languagecenter.url');
+        return config('languagecenter.url');
     }
 
     protected function getUsername()
     {
-        return Config::get('languagecenter.username');
+        return config('languagecenter.username');
     }
 
     protected function getPassword()
     {
-        return Config::get('languagecenter.password');
+        return config('languagecenter.password');
+    }
+
+    protected function getUpdateAfter()
+    {
+        return config('languagecenter.update_after', 60);
+    }
+
+    protected function getDefaultPlatform()
+    {
+        return config('languagecenter.platform', 'web');
     }
 
     protected function getAuthentication()
@@ -199,71 +354,5 @@ class Translator extends LaravelTranslator
             $this->getUsername(),
             $this->getPassword(),
         ];
-    }
-
-    protected function loadLanguages()
-    {
-        $client = $this->getClient();
-
-        $res = $client->request('GET', $this->getApiUrl().'languages', [
-            'auth' => $this->getAuthentication(),
-        ]);
-
-        if ($res->getStatusCode() != 200) {
-            throw new ApiException("API returned status [{$res->getStatusCode()}].");
-        }
-
-        $languages = json_decode((string) $res->getBody());
-
-        foreach ($languages as $language) {
-            $this->languages[] = $language->codename;
-            if ($language->is_fallback) {
-                Config::set('app.locale', $language->codename);
-                Config::set('app.fallback_locale', $language->codename);
-                $this->locale = $language->codename;
-            }
-        }
-    }
-
-    protected function createString($key, $string, $platform = null, $comment = null)
-    {
-        if ($platform == null) {
-            $platform = $this->getDefaultPlatform();
-        }
-
-        $dotpos = strpos($key, '.');
-
-        if (!($dotpos > 0)) {
-            throw new ApiException('Missing [.] in string key.');
-        }
-
-        $category = str_replace(['_'], [' '], ucfirst(substr($key, 0, $dotpos)));
-        $name = str_replace(['_'], [' '], ucfirst(substr($key, $dotpos + 1)));
-
-        $client = $this->getClient();
-
-        $res = $client->request('POST', $this->getApiUrl().'string', [
-            'auth'        => $this->getAuthentication(),
-            'form_params' => [
-                'platform' => $platform,
-                'category' => $category,
-                'key'      => $name,
-                'value'    => $string,
-                'comment'  => $comment,
-            ],
-        ]);
-
-        if ($res->getStatusCode() != 200) {
-            throw new ApiException("API returned status [{$res->getStatusCode()}].");
-        }
-
-        foreach ($this->strings as $locale => $strings) {
-            $this->strings[$locale][$key] = $string;
-        }
-    }
-
-    protected function getDefaultPlatform()
-    {
-        return Config::get('languagecenter.platform', 'web');
     }
 }

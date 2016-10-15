@@ -13,7 +13,7 @@ class TranslationServiceProvider extends LaravelTranslationServiceProvider
      */
     public function boot()
     {
-        parent::boot();
+        //parent::boot();
 
         $this->publishes([
             __DIR__.'/../config/languagecenter.php' => config_path('languagecenter.php'),
@@ -30,7 +30,6 @@ class TranslationServiceProvider extends LaravelTranslationServiceProvider
         $this->registerLoader();
 
         $this->app->singleton('translator', function ($app) {
-
             $loader = $app['translation.loader'];
 
             // When registering the translator component, we'll need to set the default
