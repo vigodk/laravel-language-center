@@ -178,8 +178,8 @@ class Translator extends LaravelTranslator
         $client = $this->getClient();
 
         try {
-            $res = $client->request('GET', $this->getApiUrl() . 'languages', [
-                'auth' => $this->getAuthentication(),
+            $res = $client->request('GET', $this->getApiUrl().'languages', [
+                'auth'  => $this->getAuthentication(),
                 'query' => [
                     'timestamp' => 'on',
                 ],
@@ -189,7 +189,7 @@ class Translator extends LaravelTranslator
                 throw new ApiException("API returned status [{$res->getStatusCode()}].");
             }
 
-            $languages = json_decode((string)$res->getBody());
+            $languages = json_decode((string) $res->getBody());
 
             Cache::forever('languagecenter.languages', $languages);
             Cache::forever('languagecenter.timestamp', $timestamp);
@@ -213,7 +213,7 @@ class Translator extends LaravelTranslator
 
             $client = $this->getClient();
 
-            $res = $client->request('GET', $this->getApiUrl() . 'strings?platform=' . $platform . '&language=' . $locale, [
+            $res = $client->request('GET', $this->getApiUrl().'strings?platform='.$platform.'&language='.$locale, [
                 'auth' => $this->getAuthentication(),
             ]);
 
@@ -221,7 +221,7 @@ class Translator extends LaravelTranslator
                 throw new ApiException("API returned status [{$res->getStatusCode()}].");
             }
 
-            $strings = json_decode((string)$res->getBody());
+            $strings = json_decode((string) $res->getBody());
 
             if (!isset($this->strings[$locale])) {
                 $this->strings[$locale] = [];
@@ -235,7 +235,7 @@ class Translator extends LaravelTranslator
             }
 
             Cache::forever('languagecenter.strings', $this->strings);
-            Cache::forever('languagecenter.language.' . $locale . '.timestamp', $timestamp);
+            Cache::forever('languagecenter.language.'.$locale.'.timestamp', $timestamp);
         } catch (\Exception $exception) {
             // failed to update string - it's okay - we do it later
         }
@@ -259,14 +259,14 @@ class Translator extends LaravelTranslator
         try {
             $client = $this->getClient();
 
-            $res = $client->request('POST', $this->getApiUrl() . 'string', [
-                'auth' => $this->getAuthentication(),
+            $res = $client->request('POST', $this->getApiUrl().'string', [
+                'auth'        => $this->getAuthentication(),
                 'form_params' => [
                     'platform' => $platform,
                     'category' => $category,
-                    'key' => $name,
-                    'value' => $string,
-                    'comment' => $comment,
+                    'key'      => $name,
+                    'value'    => $string,
+                    'comment'  => $comment,
                 ],
             ]);
 
