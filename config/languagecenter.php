@@ -10,6 +10,6 @@ return [
 
     'platform' => env('LANGUAGE_CENTER_PLATFORM'),
     
-    'cachefor' => env('LANGUAGE_CENTER_CACHEFOR', 60),
+    'update_after' => env('LANGUAGE_CENTER_UPDATE_AFTER', 60),
 
 ];
