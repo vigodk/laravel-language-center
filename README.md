@@ -15,6 +15,7 @@ LANGUAGE_CENTER_URL=The url for API v1 (with ending slash) (required)
 LANGUAGE_CENTER_USERNAME=Language Center username for Basic Auth (required)
 LANGUAGE_CENTER_PASSWORD=Language Center password for Basic Auth (required)
 LANGUAGE_CENTER_PLATFORM=The default platform to use. (default 'web')
+LANGUAGE_CENTER_UPDATE_AFTER=The amount of seconds before updating the LanguageCenter data. (default '60' seconds)
 ```
 
 For publishing the configuration file run:
