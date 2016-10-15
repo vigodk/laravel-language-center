@@ -13,7 +13,7 @@ class TranslationServiceProvider extends LaravelTranslationServiceProvider
      */
     public function boot()
     {
-        parent::boot();
+        //parent::boot();
 
         $this->publishes([
             __DIR__.'/../config/languagecenter.php' => config_path('languagecenter.php'),
