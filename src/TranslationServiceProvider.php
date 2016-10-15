@@ -30,7 +30,6 @@ class TranslationServiceProvider extends LaravelTranslationServiceProvider
         $this->registerLoader();
 
         $this->app->singleton('translator', function ($app) {
-
             $loader = $app['translation.loader'];
 
             // When registering the translator component, we'll need to set the default
