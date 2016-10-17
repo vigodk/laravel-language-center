@@ -64,6 +64,8 @@ class Translator extends LaravelTranslator
             $key = $data;
         }
 
+        $key = trim(str_replace([' '], ['_'], strtolower(trim($key))));
+
         if (!isset($string)) {
             $string = $key;
         }
