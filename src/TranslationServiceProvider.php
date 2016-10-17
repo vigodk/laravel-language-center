@@ -6,6 +6,10 @@ use Illuminate\Translation\TranslationServiceProvider as LaravelTranslationServi
 
 class TranslationServiceProvider extends LaravelTranslationServiceProvider
 {
+    protected $commands = [
+        CacheCommand::class,
+    ];
+
     /**
      * Perform post-registration booting of services.
      *
@@ -48,5 +52,7 @@ class TranslationServiceProvider extends LaravelTranslationServiceProvider
         $this->mergeConfigFrom(
             __DIR__.'/../config/languagecenter.php', 'languagecenter'
         );
+
+        $this->commands($this->commands);
     }
 }
