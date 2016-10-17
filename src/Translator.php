@@ -291,7 +291,9 @@ class Translator extends LaravelTranslator
             $this->strings[$locale][$platform][$key] = $string;
         }
 
-        Cache::forever('languagecenter.strings', $this->strings);
+        foreach ($this->languages as $language) {
+            $this->loadStrings($language, $platform);
+        }
     }
 
     public function getLanguages()
