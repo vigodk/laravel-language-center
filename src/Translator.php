@@ -17,8 +17,8 @@ class Translator extends LaravelTranslator
     /**
      * Create a new translator instance.
      *
-     * @param \Illuminate\Translation\FileLoader  $loader
-     * @param string                              $locale
+     * @param \Illuminate\Translation\FileLoader $loader
+     * @param string                             $locale
      *
      * @return void
      */
@@ -88,7 +88,7 @@ class Translator extends LaravelTranslator
                              : [$locale ?: $this->locale];
 
         foreach ($locales as $locale) {
-            if (! is_null($line = $this->getLine(
+            if (!is_null($line = $this->getLine(
                 $namespace, $group, $locale, $item, $replace
             ))) {
                 break;
