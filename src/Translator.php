@@ -6,7 +6,7 @@ use Carbon\Carbon;
 use GuzzleHttp\Client;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Translation\LoaderInterface;
+use Illuminate\Translation\FileLoader;
 use Illuminate\Translation\Translator as LaravelTranslator;
 
 class Translator extends LaravelTranslator
@@ -17,12 +17,12 @@ class Translator extends LaravelTranslator
     /**
      * Create a new translator instance.
      *
-     * @param \Illuminate\Translation\LoaderInterface $loader
-     * @param string                                  $locale
+     * @param \Illuminate\Translation\FileLoader  $loader
+     * @param string                              $locale
      *
      * @return void
      */
-    public function __construct(LoaderInterface $loader, $locale)
+    public function __construct(FileLoader $loader, $locale)
     {
         $this->loader = $loader;
         $this->locale = $locale;
@@ -84,16 +84,13 @@ class Translator extends LaravelTranslator
         // was not passed, we will use the default locales which was given to us when
         // the translator was instantiated. Then, we can load the lines and return.
 
-        $locales = $fallback ? $this->parseLocale($locale) : [$locale ?: $this->locale];
+        $locales = $fallback ? $this->localeArray($locale)
+                             : [$locale ?: $this->locale];
 
         foreach ($locales as $locale) {
-            $this->load($namespace, $group, $locale);
-
-            $line = $this->getLine(
-                $namespace, $group, $locale, $item, $replace, $platform
-            );
-
-            if (!is_null($line)) {
+            if (! is_null($line = $this->getLine(
+                $namespace, $group, $locale, $item, $replace
+            ))) {
                 break;
             }
         }
@@ -314,6 +311,8 @@ class Translator extends LaravelTranslator
      */
     protected function getLine($namespace, $group, $locale, $item, array $replace, $platform = null)
     {
+        $this->load($namespace, $group, $locale);
+
         if ($platform == null) {
             $platform = $this->getDefaultPlatform();
         }
