@@ -2,6 +2,8 @@
 
 return [
 
+    'enabled' => env('LANGUAGE_CENTER', true),
+
     'url' => env('LANGUAGE_CENTER_URL'),
 
     'username' => env('LANGUAGE_CENTER_USERNAME'),

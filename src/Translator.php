@@ -45,6 +45,14 @@ class Translator extends LaravelTranslator
      */
     public function get($data, array $replace = [], $locale = null, $fallback = true, $created = false)
     {
+        if (!$this->enabled()) {
+            if (is_array($data)) {
+                return array_get($data, 'string', $data['key']);
+            }
+
+            return $data;
+        }
+
         // Make support for array data
         if (is_array($data)) {
             $key = $data['key'];
@@ -122,6 +130,10 @@ class Translator extends LaravelTranslator
 
     public function loadLanguages()
     {
+        if (!$this->enabled()) {
+            return;
+        }
+
         $timestamp = Carbon::now()->subSeconds($this->getUpdateAfter())->timestamp;
         $lastUpdated = Cache::get('languagecenter.timestamp', 0);
 
@@ -142,6 +154,10 @@ class Translator extends LaravelTranslator
 
     public function loadStrings($locale, $platform = null, $check = null)
     {
+        if (!$this->enabled()) {
+            return;
+        }
+
         // Load languages from API
         if (count($this->languages) == 0) {
             $this->loadLanguages();
@@ -172,6 +188,10 @@ class Translator extends LaravelTranslator
 
     public function updateLanguages($catch = true)
     {
+        if (!$this->enabled()) {
+            return;
+        }
+
         $timestamp = Carbon::now()->timestamp;
 
         $client = $this->getClient();
@@ -207,6 +227,10 @@ class Translator extends LaravelTranslator
 
     public function updateStrings($locale, $platform = null, $catch = true)
     {
+        if (!$this->enabled()) {
+            return;
+        }
+
         try {
             $timestamp = Carbon::now()->timestamp;
 
@@ -250,6 +274,10 @@ class Translator extends LaravelTranslator
 
     public function createString($key, $string, $platform = null, $comment = null)
     {
+        if (!$this->enabled()) {
+            return;
+        }
+        
         if ($platform == null) {
             $platform = $this->getDefaultPlatform();
         }
@@ -370,5 +398,10 @@ class Translator extends LaravelTranslator
             $this->getUsername(),
             $this->getPassword(),
         ];
+    }
+
+    protected function enabled()
+    {
+        return config('languagecenter.enabled', true);
     }
 }
