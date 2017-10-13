@@ -5,7 +5,7 @@ Language Center for Laravel.
 
 # Install
 
-Run `composer require novasa/laravel-language-center:~1.0`.
+Run `composer require novasa/laravel-language-center:~2.0`.
 
 In `config/app.php` replace `Illuminate\Translation\TranslationServiceProvider::class,` with `Novasa\LaravelLanguageCenter\TranslationServiceProvider::class,` in the `providers`-section.
 
