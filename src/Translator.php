@@ -13,6 +13,8 @@ class Translator extends LaravelTranslator
 {
     protected $languages = [];
     protected $strings = [];
+    protected $languagesLoaded = false;
+    protected $stringsLoaded = false;
 
     /**
      * Create a new translator instance.
@@ -28,9 +30,7 @@ class Translator extends LaravelTranslator
         $this->locale = $locale;
 
         // Load languages from API
-        if (count($this->languages) == 0) {
-            $this->loadLanguages();
-        }
+        $this->loadLanguages();
     }
 
     /**
@@ -130,9 +130,11 @@ class Translator extends LaravelTranslator
 
     public function loadLanguages()
     {
-        if (!$this->enabled()) {
+        if ($this->languagesLoaded || !$this->enabled()) {
             return;
         }
+
+        $this->languagesLoaded = true;
 
         $timestamp = Carbon::now()->subSeconds($this->getUpdateAfter())->timestamp;
         $lastUpdated = Cache::get('languagecenter.timestamp', 0);
@@ -154,14 +156,14 @@ class Translator extends LaravelTranslator
 
     public function loadStrings($locale, $platform = null, $check = null)
     {
-        if (!$this->enabled()) {
+        if ($this->stringsLoaded || !$this->enabled()) {
             return;
         }
 
+        $this->stringsLoaded = true;
+
         // Load languages from API
-        if (count($this->languages) == 0) {
-            $this->loadLanguages();
-        }
+        $this->loadLanguages();
 
         if ($platform == null) {
             $platform = $this->getDefaultPlatform();
