@@ -14,7 +14,7 @@ class Translator extends LaravelTranslator
     protected $languages = [];
     protected $strings = [];
     protected $languagesLoaded = false;
-    protected $stringsLoaded = false;
+    protected $stringsLoaded = [];
 
     /**
      * Create a new translator instance.
@@ -156,11 +156,11 @@ class Translator extends LaravelTranslator
 
     public function loadStrings($locale, $platform = null, $check = null)
     {
-        if ($this->stringsLoaded || !$this->enabled()) {
+        if (isset($this->stringsLoaded[$locale]) || !$this->enabled()) {
             return;
         }
 
-        $this->stringsLoaded = true;
+        $this->stringsLoaded[$locale] = true;
 
         // Load languages from API
         $this->loadLanguages();
