@@ -143,7 +143,7 @@ class Translator extends LaravelTranslator
             $this->updateLanguages();
         }
 
-        $languages = Cache::get('languagecenter.languages');
+        $languages = Cache::get('languagecenter.languages', []);
 
         foreach ($languages as $language) {
             $this->languages[] = $language->codename;
